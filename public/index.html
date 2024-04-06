@@ -24,10 +24,10 @@
             <div class="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center">
                 <img class="rounded-full h-16 w-16" src="./water.png" alt="Profile picture description">
                 <div class="ml-4">
-                    <h3 class="font-bold rilo-text" >Water</h3>
+                    <h3 class="font-bold rilo-text">Water</h3>
                     <p class="text-gray-600">摆烂，摆大烂</p>
                     <div>
-                            <a href="https://github.com/water2027"><span class="fancy-text">我的GitHub</span></a>
+                        <a href="https://github.com/water2027"><span class="fancy-text">我的GitHub</span></a>
                     </div>
                 </div>
             </div>
@@ -36,7 +36,7 @@
 
     <footer class="bg-transparent text-white p-4">
         <div class="container mx-auto">
-                <a href="https://github.com/water2027" target="_blank"><span class="github">本博客项目来源地址</span></a>
+            <a href="https://github.com/water2027/Good_Bye_World" target="_blank"><span class="github">本博客项目来源地址</span></a>
         </div>
     </footer>
 
@@ -46,10 +46,10 @@
             .then(data => {
                 const contentDiv = document.getElementById('content');
 
-                for(let i=data.length -1 ;i>=0; i--){
+                for (let i = data.length - 1; i >= 0; i--) {
                     const item = data[i];
                     const anchor = document.createElement('a');
-                    anchor.href = `./${item.name}.html`;
+                    anchor.href = `./${item.name}/${item.name}.html`;
                     const faq = document.createElement('article');
                     faq.className = 'bg-white p-6 rounded-lg shadow-md mb-4';
                     const title = document.createElement('h2');
