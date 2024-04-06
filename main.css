@@ -1,0 +1,46 @@
+.star-pattern {
+    background-image: url('wow.png');
+    background-size: cover;
+    /* 确保背景图像覆盖整个页面 */
+    background-repeat: no-repeat;
+    /* 防止背景图像重复 */
+    background-attachment: fixed;
+    /* 背景图像在滚动时保持固定 */
+}
+
+.fancy-text {
+    color: #FF5733;
+    /* 鲜艳的颜色 */
+    background-image: linear-gradient(to right, #FFC371, #FF5F6D);
+    /* 渐变效果 */
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.rilo-text {
+    background: linear-gradient(to right, #FF7E5F, #FEB47B);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.github {
+    text-shadow: 2px 2px 4px #000000;
+}
+
+.gradient-text {
+    background: linear-gradient(to right, #00B4DB, #0083B0);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.dream {
+    background: linear-gradient(to right, #FF6B6B, #FFD26F);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.sea {
+    background: linear-gradient(to right, #3A7BD5, #3A6073);
+    -webkit-background-clip: text;
+    color: transparent;
+}

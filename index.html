@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water's Blog?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body class="star-pattern">
+    <header class="bg-transparent text-white p-4">
+        <div class="container mx-auto">
+            <h1 class="github">blog</h1>
+        </div>
+    </header>
+    <main class="container mx-auto flex justify-between p-4">
+        <section class="w-3/4" id="content">
+        </section>
+
+        <aside class="w-1/4 ml-4">
+            <div class="bg-white p-4 rounded-lg shadow-md mb-4 flex items-center">
+                <img class="rounded-full h-16 w-16" src="./water.png" alt="Profile picture description">
+                <div class="ml-4">
+                    <h3 class="font-bold rilo-text" >Water</h3>
+                    <p class="text-gray-600">摆烂，摆大烂</p>
+                    <div>
+                            <a href="https://github.com/water2027"><span class="fancy-text">我的GitHub</span></a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="bg-transparent text-white p-4">
+        <div class="container mx-auto">
+                <a href="https://github.com/water2027" target="_blank"><span class="github">本博客项目来源地址</span></a>
+        </div>
+    </footer>
+
+    <script>
+        fetch('./faq.json')
+            .then(response => response.json())
+            .then(data => {
+                const contentDiv = document.getElementById('content');
+
+                for(let i=data.length -1 ;i>=0; i--){
+                    const item = data[i];
+                    const anchor = document.createElement('a');
+                    anchor.href = `./${item.name}.html`;
+                    const faq = document.createElement('article');
+                    faq.className = 'bg-white p-6 rounded-lg shadow-md mb-4';
+                    const title = document.createElement('h2');
+                    title.className = 'text-xl font-bold mb-2 gradient-text';
+                    title.innerHTML = `${item.name}`
+                    const time = document.createElement('div');
+                    time.className = 'text-gray-600 text-sm sea';
+                    time.innerHTML = `<span>${item.time}</span>`;
+                    const jmjx = document.createElement('h1');
+                    jmjx.className = 'text-xl font-bold mb-2 dream';
+                    jmjx.innerHTML = `${item.glyk}`
+                    faq.appendChild(title);
+                    faq.appendChild(jmjx);
+                    faq.appendChild(time);
+                    anchor.appendChild(faq);
+
+                    // 创建图片元素
+                    //const image = document.createElement('img');
+                    // 假设图片路径也在JSON数据中，例如item.imageUrl
+                    // 如果没有图片路径，这里需要相应地调整
+                    //image.src = item.imageUrl;
+
+                    // 将元素添加到页面中
+                    contentDiv.appendChild(anchor);
+                    contentDiv.appendChild(document.createElement('br'));
+                    //contentDiv.appendChild(image);
+                    //contentDiv.appendChild(document.createElement('br'));
+                }
+            })
+            .catch(error => console.error('Error loading JSON:', error));
+    </script>
+</body>
+
+</html>
