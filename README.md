@@ -53,4 +53,12 @@ server {
 sudo nginx -t
 sudo systemctl restart nginx
 ```
-要放开相应的端口，然后就可以使用ip或者域名访问了，大概。
+要放开相应的端口，然后就可以使用ip或者域名访问了，大概。   
+记得启动app.js
+```
+node app.js
+```
+如果要后台运行的话，使用这个
+```
+nohup node app.js &
+```
