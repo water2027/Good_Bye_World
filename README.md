@@ -29,39 +29,23 @@ npm init
 配置文件：
 ```
 server {
-    listen 80;
-    server_name 你的域名或者ip;
+        listen 80;
+        server_name 你的ip或者域名;
 
-    location / {
         root /var/www/boke/public;
-        try_files $uri $uri/ /index.html;
-    }
 
-    location ^~ /.well-known/acme-challenge/ {
-        allow all;
-        root /var/www/boke/public;
-        default_type "text/plain";
-        try_files $uri =404;
-    }
+        location / {
+                try_files $uri $uri/ /index.html;
+        }
 
-
-    location /create {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    location /reply {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
+        location /api/ {
+                proxy_pass http://localhost:3000;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_cache_bypass $http_upgrade;
+        }
 }
 ```
 然后检查并重启nginx
