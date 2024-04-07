@@ -41,7 +41,7 @@ function addObjectToJsonFile(filePath, newObject) {
         json.push(newObject);
 
         // 将 JavaScript 对象转换为 JSON 字符串
-        
+
 
         // 写回文件
         jsonback(filePath,json);
@@ -89,7 +89,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/create', (req, res) => {
-    const { title, body, jmjx } = req.body;
+    const { title, body, jmjx,tag } = req.body;
     create(title);
     const filename = title + '.html';
     const filePath = path.join(__dirname, 'public', title, filename);
@@ -250,7 +250,7 @@ app.post('/api/create', (req, res) => {
     });
     const now = new Date()
     let wow = now.toLocaleDateString();
-    const newobject = { name: title, time: wow, glyk: jmjx };
+    const newobject = { name: title, time: wow, glyk: jmjx, tag: tag };
     const jsonpath = path.join(__dirname, 'public', 'faq.json');
     const replyPath = path.join(__dirname, 'public', title,'reply.json');
     fs.writeFile(replyPath,'[]',(err)=>{
