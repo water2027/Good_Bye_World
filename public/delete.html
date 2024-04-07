@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>删除文章</title>
+</head>
+
+<body>
+    <div id="content"></div>
+    <script>
+        function dele(title) {
+            fetch('/api/del',{
+                method:'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({title}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            });
+        }
+
+        fetch('./faq.json')
+            .then(response => response.json())
+            .then(data => {
+                const contentDiv = document.getElementById('content');
+                for (let i = data.length - 1; i >= 0; i--) {
+                    const item = data[i];
+                    const anchor = document.createElement('div');
+                    anchor.href = `./${item.name}/${item.name}.html`;
+                    const faq = document.createElement('article');
+                    faq.className = 'bg-white p-6 rounded-lg shadow-md mb-4';
+                    const title = document.createElement('h2');
+                    title.className = 'text-xl font-bold mb-2 gradient-text';
+                    title.innerHTML = `${item.name}`
+                    const del = document.createElement('button');
+                    del.innerHTML = '删除';
+                    del.addEventListener('click', () => {
+                        dele(item.name);
+                    });
+                    faq.appendChild(title);
+                    faq.appendChild(del);
+                    anchor.appendChild(faq);
+                    contentDiv.appendChild(anchor);
+                }
+            });
+    </script>
+</body>
+
+</html>
