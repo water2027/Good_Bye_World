@@ -11,6 +11,16 @@ function create(name) {
         console.log('文件夹好了！')
     })
 }
+function jsonback(filePath,json) {
+    const jsonString = JSON.stringify(json, null, 2); // 缩进为 2 个空格，以便阅读
+    fs.writeFile(filePath, jsonString, 'utf8', (writeErr) => {
+        if (writeErr) {
+            console.error('写入文件时发生错误:', writeErr);
+            return;
+        }
+        console.log('JSON 文件更新成功');
+    });
+}
 function addObjectToJsonFile(filePath, newObject) {
     fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
@@ -31,18 +41,45 @@ function addObjectToJsonFile(filePath, newObject) {
         json.push(newObject);
 
         // 将 JavaScript 对象转换为 JSON 字符串
-        const jsonString = JSON.stringify(json, null, 2); // 缩进为 2 个空格，以便阅读
+        
 
         // 写回文件
-        fs.writeFile(filePath, jsonString, 'utf8', (writeErr) => {
-            if (writeErr) {
-                console.error('写入文件时发生错误:', writeErr);
-                return;
-            }
-            console.log('JSON 文件更新成功');
-        });
+        jsonback(filePath,json);
     });
 }
+function delreply(filePath, name,reply){
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('读取文件时发生错误:', err);
+            return;
+        }
+
+        // 尝试解析 JSON
+        let json;
+        try {
+            json = JSON.parse(data);
+        } catch (parseErr) {
+            console.error('解析 JSON 时发生错误:', parseErr);
+            return;
+        }
+
+        // 假设 json 是一个数组
+        for (let i = json.length - 1; i >= 0; i--) {
+            if (json[i].name == name && json[i].reply == reply) {
+                json.splice(i, 1);
+            }
+        }
+        jsonback(filePath,json);
+    });
+}
+const del = (folderPath) => {
+    fs.rmdir(folderPath, { recursive: true }, (err) => {
+        if (err) {
+            throw err;
+        }
+        console.log(`${folderPath} 文件夹已被删除`);
+    });
+};
 app.use('/myhtml', express.static(path.join(__dirname, 'myhtml')));
 app.use(express.static('public'));
 app.use(express.json());
@@ -51,7 +88,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.post('/create', (req, res) => {
+app.post('/api/create', (req, res) => {
     const { title, body, jmjx } = req.body;
     create(title);
     const filename = title + '.html';
@@ -59,7 +96,6 @@ app.post('/create', (req, res) => {
     const htmlContent = `
     <!DOCTYPE html>
     <html lang="en">
-    
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,23 +115,31 @@ app.post('/create', (req, res) => {
                 color: #333;
                 font-weight: 600;
             }
-    
             article {
                 background-color: #f5f5f5;
                 /* 淡灰色背景 */
                 font-family: 'SimSun', '宋体', serif;
             }
+            #click{
+                background-color: #007bff;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+            }
         </style>
     </head>
-    
+
     <body class="star-pattern">
-    
+
         <header class="bg-transparent text-white p-4">
             <div class="container mx-auto">
                 <h1 class="github">blog</h1>
             </div>
         </header>
-    
+
         <main class="container mx-auto flex justify-between p-4">
             <section class="w-2/3 ml-28" id="content">
                 <article class="bg-white p-6 rounded-lg shadow-md mb-4">
@@ -103,7 +147,7 @@ app.post('/create', (req, res) => {
                     ${body}
                 </article>
                 <textarea id="name" cols="10" rows="1" placeholder="不会真的有人填真名吧？"></textarea>
-                <textarea id="reply" cols="30" rows="10" placeholder="想说点什么吗？"></textarea>
+                <textarea id="reply" cols="30" rows="1" placeholder="想说点什么吗？"></textarea>
                 <button id="click">点我留言，速</button>
                 <div id="lqyj"></div>
             </section>
@@ -120,7 +164,6 @@ app.post('/create', (req, res) => {
                 </div>
             </aside>
         </main>
-    
         <footer class="bg-transparent text-white p-4">
             <div class="container mx-auto">
                 <a href="https://github.com/water2027" target="_blank"><span class="github">本博客项目来源地址</span></a>
@@ -129,6 +172,22 @@ app.post('/create', (req, res) => {
         <script>
             const title = '${title}';
             const button = document.getElementById('click');
+            function dele(name,reply,title){
+                fetch('/api/delreply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name , reply, title }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('删除成功?');
+                    })
+                    .catch((error) => {
+                        console.log('失败了?' + error);
+                    });
+            }
             function get_reply(){
                 fetch('./reply.json')
                     .then(response => response.json())
@@ -144,8 +203,14 @@ app.post('/create', (req, res) => {
                             const reply = document.createElement('p');
                             reply.className = 'text-gray-600 text-sm sea';
                             reply.innerHTML = item.reply;
+                            const del = document.createElement('button');
+                            del.innerHTML = '删除';
+                            del.addEventListener('click', () => {
+                                dele(item.name,item.reply,title);
+                            });
                             lq.appendChild(name);
                             lq.appendChild(reply);
+                            lq.appendChild(del);
                             lqyj.appendChild(lq);
                         }
                     });
@@ -167,12 +232,12 @@ app.post('/create', (req, res) => {
                     .catch((error) => {
                         console.log('失败了?' + error);
                     });
-                get_reply();
             });
             document.addEventListener('DOMContentLoaded', () => {
                 get_reply();
             });
         </script>
+        <script src="https://api.vvhan.com/api/script/yinghua"></script>
     </body>
     </html>`;
 
@@ -197,14 +262,52 @@ app.post('/create', (req, res) => {
     addObjectToJsonFile(jsonpath, newobject);
 });
 
-app.post('/reply', (req, res) => {
+app.post('/api/reply', (req, res) => {
     const { name, reply, title } = req.body;
+    const now = new Date()
+    let wow = now.toLocaleTimeString();
     const jsonpath = path.join(__dirname, 'public',title, 'reply.json');
-    const newobject = { name:name, reply:reply };
+    const newobject = { name:name, reply:reply ,time:wow };
     addObjectToJsonFile(jsonpath, newobject);
 });
+
+app.post('/api/delreply',(req,res)=>{
+    const {name,reply,title} = req.body;
+    const jsonpath = path.join(__dirname, 'public',title, 'reply.json');
+    delreply(jsonpath,name,reply);
+})
+
+app.post('/api/del', (req, res) => {
+    const {title}=req.body;
+    fs.readFile(path.join(__dirname, 'public', 'faq.json'), 'utf8', (err, data) => {
+        if (err) {
+            console.error('读取文件时发生错误:', err);
+            return;
+        }
+
+        // 尝试解析 JSON
+        let json;
+        try {
+            json = JSON.parse(data);
+        } catch (parseErr) {
+            console.error('解析 JSON 时发生错误:', parseErr);
+            return;
+        }
+
+        // 假设 json 是一个数组
+        for (let i = json.length - 1; i >= 0; i--) {
+            if (json[i].name == title) {
+                json.splice(i, 1);
+            }
+        }
+        jsonback(path.join(__dirname, 'public', 'faq.json'),json);
+    });
+    del(path.join(__dirname, 'public', title));
+});
+
+
 
 const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`服务器运行在 http://localhost:${PORT}`);
-});                
+});
