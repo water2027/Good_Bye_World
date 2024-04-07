@@ -7,13 +7,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var title = document.getElementById('title').value;
             var body = document.getElementById('body').value;
             var jmjx = document.getElementById('jmjx').value;
+            var tag = document.getElementById('tag').value;
 
-            fetch('/create', {
+            fetch('/api/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ title, body, jmjx }),
+                body: JSON.stringify({ title, body, jmjx, tag }),
             })
             .then(response => response.json())
             .then(data => {
