@@ -8,42 +8,81 @@
 </head>
 
 <body>
-    <div id="content"></div>
+    <aside id="content"></aside>
+    <textarea id="article"></textarea>
+    <button id="submit">提交修改</button>
     <script>
-        function dele(title) {
-            fetch('/api/del',{
-                method:'POST',
+        const art = document.getElementById('article')
+        const submit = document.getElementById('submit')
+        let wow = ""
+        submit.addEventListener('click', () => {
+            let newbody = art.value
+            fetch('/api/update', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({title}),
+                body: JSON.stringify({ title: wow, newbody: newbody })
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-            });
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                })
+                .catch((error) => {
+                    console.error(error)
+                })
+        })
+        function dele(title) {
+            fetch('/api/del', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                });
         }
 
-        fetch('./faq.json')
+        function getarticle(title) {
+            art.value = ''
+            fetch('/api/getart?title='+encodeURIComponent(title), {
+                method: 'GET'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    wow = title;
+                    art.value = data.body;
+                })
+        }
+
+        fetch('/api/posts')
             .then(response => response.json())
             .then(data => {
                 const contentDiv = document.getElementById('content');
-                for (let i = data.length - 1; i >= 0; i--) {
-                    const item = data[i];
+                for (let item of data) {
                     const anchor = document.createElement('div');
-                    anchor.href = `./${item.name}/${item.name}.html`;
+                    anchor.href = `./${item.title}/${item.title}.html`;
                     const faq = document.createElement('article');
                     faq.className = 'bg-white p-6 rounded-lg shadow-md mb-4';
                     const title = document.createElement('h2');
                     title.className = 'text-xl font-bold mb-2 gradient-text';
-                    title.innerHTML = `${item.name}`
+                    title.innerHTML = `${item.title}`
                     const del = document.createElement('button');
                     del.innerHTML = '删除';
                     del.addEventListener('click', () => {
-                        dele(item.name);
+                        dele(item.title);
+                    });
+                    const getart = document.createElement('button');
+                    getart.innerHTML = '修改';
+                    getart.addEventListener('click', () => {
+                        getarticle(`${item.title}`)
                     });
                     faq.appendChild(title);
                     faq.appendChild(del);
+                    faq.appendChild(getart);
                     anchor.appendChild(faq);
                     contentDiv.appendChild(anchor);
                 }
