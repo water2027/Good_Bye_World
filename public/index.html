@@ -56,8 +56,9 @@
                     title.innerHTML = `${item.title}`
                     const time = document.createElement('div');
                     time.className = 'text-gray-600 text-sm sea';
-                    let now = item.created_at.substring(0,10);
-                    time.innerHTML = `<span>${now}</span>`;
+                    const utcDate = new Date(item.created_at);
+                    const formattedDate = utcDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+                    time.innerHTML = `<span>${formattedDate}</span>`;
                     const jmjx = document.createElement('h1');
                     jmjx.className = 'text-xl font-bold mb-2 dream';
                     jmjx.innerHTML = `${item.jmjx}`
