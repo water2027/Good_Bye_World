@@ -2,84 +2,26 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const app = express();
-function create(name) {
-    const filePath = path.join(__dirname, 'public', name);
-    fs.mkdir(filePath, { recursive: true }, (err) => {
-        if (err) {
-            throw err;
-        }
-        console.log('文件夹好了！')
-    })
+const db = require('./database');
+function addPost(newPost) {
+    // 假设 time 字段由数据库自动生成
+    return db.execute('INSERT INTO posts (title, jmjx, body, tag) VALUES (?, ?, ?, ?)',
+                      [newPost.title, newPost.jmjx, newPost.body, newPost.tag]);
 }
-function jsonback(filePath,json) {
-    const jsonString = JSON.stringify(json, null, 2); // 缩进为 2 个空格，以便阅读
-    fs.writeFile(filePath, jsonString, 'utf8', (writeErr) => {
-        if (writeErr) {
-            console.error('写入文件时发生错误:', writeErr);
-            return;
-        }
-        console.log('JSON 文件更新成功');
-    });
+
+function addReply(newreply){
+    return db.execute('INSERT INTO reply (title,name,reply) VALUES (?, ?, ?)',
+    [newreply.title, newreply.name, newreply.reply])
 }
-function addObjectToJsonFile(filePath, newObject) {
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('读取文件时发生错误:', err);
-            return;
-        }
 
-        // 尝试解析 JSON
-        let json;
-        try {
-            json = JSON.parse(data);
-        } catch (parseErr) {
-            console.error('解析 JSON 时发生错误:', parseErr);
-            return;
-        }
-
-        // 假设 json 是一个数组
-        json.push(newObject);
-
-        // 将 JavaScript 对象转换为 JSON 字符串
-
-
-        // 写回文件
-        jsonback(filePath,json);
-    });
+function deletePost(title) {
+    return db.execute('DELETE FROM posts WHERE title = ?', [title]);
 }
-function delreply(filePath, name,reply){
-    fs.readFile(filePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('读取文件时发生错误:', err);
-            return;
-        }
 
-        // 尝试解析 JSON
-        let json;
-        try {
-            json = JSON.parse(data);
-        } catch (parseErr) {
-            console.error('解析 JSON 时发生错误:', parseErr);
-            return;
-        }
-
-        // 假设 json 是一个数组
-        for (let i = json.length - 1; i >= 0; i--) {
-            if (json[i].name == name && json[i].reply == reply) {
-                json.splice(i, 1);
-            }
-        }
-        jsonback(filePath,json);
-    });
+function delreply(dereply){
+    return db.execute('DELETE FROM reply WHERE title = ? AND name = ? AND reply = ?',[dereply.title,dereply.name,dereply.reply])
 }
-const del = (folderPath) => {
-    fs.rmdir(folderPath, { recursive: true }, (err) => {
-        if (err) {
-            throw err;
-        }
-        console.log(`${folderPath} 文件夹已被删除`);
-    });
-};
+
 app.use('/myhtml', express.static(path.join(__dirname, 'myhtml')));
 app.use(express.static('public'));
 app.use(express.json());
@@ -88,14 +30,30 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.post('/api/create', (req, res) => {
-    const { title, body, jmjx,tag } = req.body;
-    create(title);
+app.get('/api/posts',(req,res)=>{
+        //从数据库获取数据
+        db.execute('SELECT * FROM posts ORDER BY created_at DESC')
+            .then(([rows])=>{
+                res.json(rows);
+            })
+            .catch(err=>{
+                res.status(500).send({message:'error:',error:err})
+            });
+});
+
+app.post('/api/create',async (req, res) => {
+try{
+    const { title, jmjx, body, tag } = req.body;
+
+    const foldpath = path.join(__dirname,'public',title);
+    await fs.promises.mkdir(foldpath,{recursive:true});
+
     const filename = title + '.html';
     const filePath = path.join(__dirname, 'public', title, filename);
     const htmlContent = `
     <!DOCTYPE html>
     <html lang="en">
+
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -108,9 +66,7 @@ app.post('/api/create', (req, res) => {
                 text-indent: 2em;
                 line-height: 1.8;
                 margin-top: 10px;
-                /* 段落顶部外边距 */
                 margin-bottom: 10px;
-                /* 段落底部外边距 */
                 font-size: 18px;
                 color: #333;
                 font-weight: 600;
@@ -120,7 +76,7 @@ app.post('/api/create', (req, res) => {
                 /* 淡灰色背景 */
                 font-family: 'SimSun', '宋体', serif;
             }
-            #click{
+            #click {
                 background-color: #007bff;
                 color: white;
                 border: none;
@@ -141,13 +97,11 @@ app.post('/api/create', (req, res) => {
         </header>
 
         <main class="container mx-auto flex justify-between p-4">
-            <section class="w-2/3 ml-28" id="content">
-                <article class="bg-white p-6 rounded-lg shadow-md mb-4">
-                    <h2 class="gradient-text">${title}</h2>
-                    ${body}
+            <section class="w-2/3 ml-28">
+                <article class="bg-white p-6 rounded-lg shadow-md mb-4" id="content">
                 </article>
                 <textarea id="name" cols="10" rows="1" placeholder="不会真的有人填真名吧？"></textarea>
-                <textarea id="reply" cols="30" rows="1" placeholder="想说点什么吗？"></textarea>
+                <textarea id="reply" cols="10" rows="1" placeholder="想说点什么吗？"></textarea>
                 <button id="click">点我留言，速</button>
                 <div id="lqyj"></div>
             </section>
@@ -164,6 +118,7 @@ app.post('/api/create', (req, res) => {
                 </div>
             </aside>
         </main>
+
         <footer class="bg-transparent text-white p-4">
             <div class="container mx-auto">
                 <a href="https://github.com/water2027" target="_blank"><span class="github">本博客项目来源地址</span></a>
@@ -172,29 +127,34 @@ app.post('/api/create', (req, res) => {
         <script>
             const title = '${title}';
             const button = document.getElementById('click');
-            function dele(name,reply,title){
+            function dele(name, reply, title) {
                 fetch('/api/delreply', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name , reply, title }),
+                    body: JSON.stringify({ name, reply, title }),
                 })
                     .then(response => response.json())
                     .then(data => {
+
                         console.log('删除成功?');
+                        get_reply();
                     })
                     .catch((error) => {
                         console.log('失败了?' + error);
                     });
             }
-            function get_reply(){
-                fetch('./reply.json')
+            function get_reply() {
+                const lqyj = document.getElementById('lqyj');
+                lqyj.innerHTML='';
+                fetch('/api/getreply?title='+ encodeURIComponent(title),{
+                    method: 'GET'
+                })
                     .then(response => response.json())
                     .then(data => {
-                        const lqyj = document.getElementById('lqyj');
-                        for (let i = data.length - 1; i >= 0; i--) {
-                            const item = data[i];
+                        for (let i=data.length-1;i>=0;i--){
+                            let item = data[i];
                             const lq = document.createElement('article');
                             lq.className = 'bg-white p-6 rounded-lg shadow-md mb-4';
                             const name = document.createElement('h2');
@@ -206,7 +166,7 @@ app.post('/api/create', (req, res) => {
                             const del = document.createElement('button');
                             del.innerHTML = '删除';
                             del.addEventListener('click', () => {
-                                dele(item.name,item.reply,title);
+                                dele(item.name, item.reply, title);
                             });
                             lq.appendChild(name);
                             lq.appendChild(reply);
@@ -218,94 +178,146 @@ app.post('/api/create', (req, res) => {
             button.addEventListener('click', () => {
                 const name = document.getElementById('name').value;
                 const reply = document.getElementById('reply').value;
-                fetch('/reply', {
+                fetch('/api/reply', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name, reply, title }),
+                    body: JSON.stringify({ title, name, reply }),
                 })
                     .then(response => response.json())
                     .then(data => {
                         console.log('留言成功?');
+                        get_reply();
                     })
                     .catch((error) => {
                         console.log('失败了?' + error);
                     });
             });
-            document.addEventListener('DOMContentLoaded', () => {
-                get_reply();
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                fetch('/api/getart?title='+ encodeURIComponent(title), {
+                    method: 'GET'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const content = document.getElementById('content');
+                        const h1 = document.createElement('h1');
+                        h1.className = 'gradient-text';
+                        h1.innerHTML = data.title;
+                        const p = document.createElement('p');
+                        p.innerHTML = data.body;
+                        content.appendChild(h1);
+                        content.appendChild(p);
+                    })
+                    .catch((error) => {
+                        console.log('失败了?' + error);
+                    });
+                await get_reply();
             });
+
         </script>
-        <script src="https://api.vvhan.com/api/script/yinghua"></script>
     </body>
+
     </html>`;
 
-    fs.writeFile(filePath, htmlContent, (err) => {
-        if (err) {
-            res.status(500).send({ message: '文件写入失败', error: err });
-            return;
-        }
-        res.send({ message: '文件创建成功', filename });
-    });
-    const now = new Date()
-    let wow = now.toLocaleDateString();
-    const newobject = { name: title, time: wow, glyk: jmjx, tag: tag };
-    const jsonpath = path.join(__dirname, 'public', 'faq.json');
-    const replyPath = path.join(__dirname, 'public', title,'reply.json');
-    fs.writeFile(replyPath,'[]',(err)=>{
-        if(err){
-            throw err;
-        }
-        console.log('回复文件创建成功！')
-    });
-    addObjectToJsonFile(jsonpath, newobject);
+    await fs.promises.writeFile(filePath, htmlContent,'utf-8');
+    await addPost(req.body);
+
+    res.send({message:'成功',filename});
+}catch(err){
+        console.error(err);
+        res.status(500).send({message:'失败',error:err});
+}
 });
 
-app.post('/api/reply', (req, res) => {
-    const { name, reply, title } = req.body;
-    const now = new Date()
-    let wow = now.toLocaleTimeString();
-    const jsonpath = path.join(__dirname, 'public',title, 'reply.json');
-    const newobject = { name:name, reply:reply ,time:wow };
-    addObjectToJsonFile(jsonpath, newobject);
+app.post('/api/reply',async (req, res) => {
+    try{
+        const {title, name, reply} = req.body;
+        await addReply(req.body);
+        res.status(200).send({message:'成功'});
+    }catch(err){
+        console.error(err);
+        res.status(500).send({message:'失败',error:err});
+    }
 });
 
-app.post('/api/delreply',(req,res)=>{
-    const {name,reply,title} = req.body;
-    const jsonpath = path.join(__dirname, 'public',title, 'reply.json');
-    delreply(jsonpath,name,reply);
+app.post('/api/delreply',async (req,res)=>{
+    try{
+        const {name,reply,title} = req.body;
+
+        await delreply(req.body);
+        res.status(200).send({message:'成功'});
+    }catch(err){
+        console.error(err);
+        res.status(500).send({message:'失败',error:err});
+    }
 })
 
-app.post('/api/del', (req, res) => {
+app.post('/api/del',async (req, res) => {
     const {title}=req.body;
-    fs.readFile(path.join(__dirname, 'public', 'faq.json'), 'utf8', (err, data) => {
-        if (err) {
-            console.error('读取文件时发生错误:', err);
-            return;
-        }
-
-        // 尝试解析 JSON
-        let json;
-        try {
-            json = JSON.parse(data);
-        } catch (parseErr) {
-            console.error('解析 JSON 时发生错误:', parseErr);
-            return;
-        }
-
-        // 假设 json 是一个数组
-        for (let i = json.length - 1; i >= 0; i--) {
-            if (json[i].name == title) {
-                json.splice(i, 1);
-            }
-        }
-        jsonback(path.join(__dirname, 'public', 'faq.json'),json);
-    });
-    del(path.join(__dirname, 'public', title));
+    await fs.promises.rm(path.join(__dirname, 'public', title), { recursive: true });
+    await deletePost(title);
 });
 
+app.get('/api/getart', (req, res) => {
+    const { title } = req.query;
+    db.execute('SELECT title, body FROM posts WHERE title = ?', [title])
+        .then(([rows]) => {
+            // 判断是否找到了文章
+            if (rows.length > 0) {
+                res.json(rows[0]);
+            } else {
+                res.status(404).send('文章未找到');
+            }
+        })
+        .catch(err => {
+            // 处理查询过程中可能出现的错误
+            console.error('数据库查询失败', err);
+            res.status(500).send('内部服务器错误');
+        });
+});
 
+app.post('/api/update', (req, res) => {
+    const { title, newbody } = req.body;
+    console.log(title)
+    console.log(newbody)
+    // 检查 title 和 body 是否存在
+    if (title === undefined || newbody === undefined) {
+        return res.status(400).send({ message: '缺少必要的参数' });
+    }
+
+    db.execute('UPDATE posts SET body = ? WHERE title = ?', [newbody, title])
+        .then(result => {
+            if (result[0].affectedRows > 0) {
+                res.send({ message: '更新成功' });
+            } else {
+                res.status(404).send({ message: '未找到相应标题的帖子' });
+            }
+        })
+        .catch(err => {
+            console.error('数据库操作失败', err);
+            res.status(500).send({ message: '内部服务器错误' });
+        });
+});
+
+app.get('/api/getreply',(req,res)=>{
+    const {title} = req.query;
+    db.execute('SELECT name, reply FROM reply WHERE title = ?', [title])
+        .then(([rows]) => {
+            // 判断是否找到了文章
+            if (rows.length > 0) {
+                res.json(rows);
+            } else {
+                res.status(404).send('文章未找到');
+            }
+        })
+        .catch(err => {
+            // 处理查询过程中可能出现的错误
+            console.error('数据库查询失败', err);
+            res.status(500).send('内部服务器错误');
+        });
+})
 
 const PORT = 3000;
 app.listen(PORT, () => {
