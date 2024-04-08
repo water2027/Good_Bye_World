@@ -163,6 +163,11 @@ try{
                             const reply = document.createElement('p');
                             reply.className = 'text-gray-600 text-sm sea';
                             reply.innerHTML = item.reply;
+                            const time = document.createElement('div');
+                            time.className = 'text-gray-600 text-sm sea';
+                            const utcDate = new Date(item.created_at);
+                            const formattedDate = utcDate.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+                            time.innerHTML = '<span>'+formattedDate'+'</span>';                          
                             const del = document.createElement('button');
                             del.innerHTML = '删除';
                             del.addEventListener('click', () => {
